@@ -24,6 +24,7 @@ The repository is structured as follows to ensure easy navigation and understand
 3. **R Markdown Files**: `Blockbuster Insights working.Rmd` includes all scripts and commentary.
 4. **HTML Report**: `Blockbuster Insights working.html` for web-based viewing.
 5. **PDF Report**: `Blockbuster Insights working.pdf` for easy printing and sharing.
+6. **Dataset**: `movie_metadata_original.csv` includes the full original dataset on which the data analysis is done.
 
 # Tools and Technology
 
