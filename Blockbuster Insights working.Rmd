@@ -1,0 +1,435 @@
+---
+title: "IMDB"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-12-02"
+---
+
+```{r}
+myData <- read.csv("movie_metadata_original.csv")
+movie_data <- read.csv("movie_metadata_original.csv")
+head(myData)
+```
+```{r}
+sum(is.na(myData))
+```
+```{r}
+nrow(myData)
+```
+```{r}
+library(ggplot2)
+```
+
+#Summary Statistics
+```{r}
+summary(movie_data)
+```
+
+#Data Structure
+```{r}
+str(movie_data)
+```
+
+#Visualization
+
+#Histograms
+
+#Histogram num_critic_for_reviews
+#Saving Histogram to a PNG file
+```{r}
+png("num_critic_for_reviews",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$num_critic_for_reviews)
+```
+
+#Histogram duration 
+#Saving Histogram to a PNG file
+```{r}
+png("duration ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$duration)
+```
+
+#Histogram director_facebook_likes 
+#Saving Histogram to a PNG file
+```{r}
+png("director_facebook_likes ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$director_facebook_likes)
+```
+#create histogram using ggplot2
+```{r}
+histogram<-ggplot(movie_data,aes(x=duration))+
+  geom_histogram(binwidth = 10,fill="white",color="black")+
+  labs(x="Duration in Minutes", y="Frequency",title="Histogram of Movie Duration")
+```
+#Save the histogram as a PNG file
+```{r}
+ggsave("durtion_histogram_ggplot.png",plot=histogram, width=8,height = 6, units = "in")
+```
+
+
+#Histogram num_voted_users 
+#Saving Histogram to a PNG file
+```{r}
+png("num_voted_users ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$num_voted_users)
+```
+
+#Histogram cast_total_facebook_likes
+#Saving Histogram to a PNG file
+```{r}
+png("cast_total_facebook_likes ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$cast_total_facebook_likes)
+```
+
+#Histogram facenumber_in_poster 
+#Saving Histogram to a PNG file
+```{r}
+png("facenumber_in_poster ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$facenumber_in_poster)
+```
+
+#Histogram num_user_for_reviews 
+#Saving Histogram to a PNG file
+```{r}
+png("num_user_for_reviews ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$num_user_for_reviews)
+```
+
+#Histogram actor_2_facebook_likes 
+#Saving Histogram to a PNG file
+```{r}
+png("actor_2_facebook_likes ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$actor_2_facebook_likes)
+```
+
+#Histogram imdb_score 
+#Saving Histogram to a PNG file
+```{r}
+png("imdb_score ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$imdb_score)
+```
+
+#Histogram movie_facebook_likes 
+#Saving Histogram to a PNG file
+```{r}
+png("movie_facebook_likes ",width = 800,height = 600)
+```
+#Create Histogram
+```{r}
+hist(movie_data$movie_facebook_likes)
+```
+
+```{r}
+numeric_cols <- sapply(myData, is.numeric)
+
+detect_outliers <- function(x, na.rm = TRUE) {
+  qnt <- quantile(x, probs=c(0.25,0.75), na.rm = na.rm)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  return(x < (qnt[1] - H) | x > (qnt[2] + H))
+}
+
+outliers_logical <- apply(myData[, numeric_cols], 2, detect_outliers)
+
+rows_with_outliers <- apply(outliers_logical, 1, any)
+
+myData_filtered <- myData[!rows_with_outliers, ]
+
+```
+
+
+```{r}
+nrow(myData_filtered)
+
+```
+```{r}
+set.seed(2)
+sampled_data <- myData_filtered[sample(nrow(myData), 2101), ]
+
+```
+
+```{r}
+  sampled_data <- na.omit(sampled_data)
+
+```
+
+```{r}
+str(sampled_data)
+
+```
+
+```{r}
+
+# Install
+#install.packages("tm")
+#install.packages("wordcloud")
+#install.packages("SnowballC") # for text stemming
+#install.packages("RColorBrewer") # color palettes
+library(tm)
+library(wordcloud)
+library("SnowballC")
+library("RColorBrewer")
+```
+
+# Regression preparation
+
+```{r}
+filtered_sampled_data <- subset(sampled_data, language == "English")
+filtered_sampled_data <- subset(filtered_sampled_data, country == "USA")
+View(filtered_sampled_data)
+
+```
+
+```{r}
+column_names <- colnames(filtered_sampled_data)
+print(column_names)
+
+```
+
+```{r}
+sampled_data_regression <- filtered_sampled_data[, !(colnames(filtered_sampled_data) %in% c('director_name', 'movie_title', 'actor_2_name', 'genres', 'actor_1_name', 'plot_keywords', 'language', 'country', 'actor_1_facebook_likes', 'actor_2_facebook_likes'))]
+
+```
+
+# Linear Regression
+
+```{r}
+Model1 <- lm(imdb_score ~ . , data =  sampled_data_regression)
+summary(Model1)
+
+```
+```{r}
+Model2 <- lm(imdb_score ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + budget + title_year + actors_facebook_likes + profits  + movie_facebook_likes , data =  sampled_data_regression)
+summary(Model2)
+
+```
+```{r}
+Model5 <- lm(imdb_score ~ num_voted_users + cast_total_facebook_likes + facenumber_in_poster + title_year + actors_facebook_likes + profits  + movie_facebook_likes , data =  sampled_data_regression)
+summary(Model5)
+
+```
+
+
+```{r}
+Model3 <- lm(gross ~ . , data =  sampled_data_regression)
+summary(Model3)
+
+```
+
+```{r}
+Model4 <- lm(gross ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + budget + title_year + actors_facebook_likes + profits  + movie_facebook_likes  , data =  sampled_data_regression)
+summary(Model4)
+
+```
+
+```{r}
+Model6 <- lm(gross ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + title_year + actors_facebook_likes + movie_facebook_likes  , data =  sampled_data_regression)
+summary(Model6)
+
+```
+
+```{r}
+#install.packages("lmtest")
+library(lmtest)
+
+lr_test <- lrtest(Model1, Model2, Model3, Model4, Model5, Model6)
+print(lr_test)
+
+```
+
+```{r}
+nrow(sampled_data_regression)
+TData <- sampled_data_regression[1:515,]
+VData <- sampled_data_regression[516:858,]
+
+Model11 <- lm(imdb_score ~ . , data =  TData)
+Model22 <- lm(imdb_score ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + budget + title_year + actors_facebook_likes + profits  + movie_facebook_likes , data =  TData)
+Model55 <- lm(imdb_score ~ num_voted_users + cast_total_facebook_likes + facenumber_in_poster + title_year + actors_facebook_likes + profits  + movie_facebook_likes , data =  TData)
+
+Model33 <- lm(gross ~ . , data =  TData)
+Model44 <- lm(gross ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + budget + title_year + actors_facebook_likes + profits  + movie_facebook_likes  , data =  TData)
+Model66 <- lm(gross ~ num_critic_for_reviews + num_voted_users + cast_total_facebook_likes + facenumber_in_poster + title_year + actors_facebook_likes + movie_facebook_likes  , data =  TData)
+
+Pred1 <- predict(Model11, VData)
+Pred2 <- predict(Model22, VData)
+Pred5 <- predict(Model55, VData)
+
+print(sqrt(mean(VData$imdb_score-Pred1)^2))
+print(sqrt(mean(VData$imdb_score-Pred2)^2))
+print(sqrt(mean(VData$imdb_score-Pred5)^2))
+
+Pred3 <- predict(Model11, VData)
+Pred4 <- predict(Model22, VData)
+Pred6 <- predict(Model55, VData)
+
+print(sqrt(mean(VData$imdb_score-Pred3)^2))
+print(sqrt(mean(VData$imdb_score-Pred4)^2))
+print(sqrt(mean(VData$imdb_score-Pred6)^2))
+
+```
+
+# Linear Regression
+
+```{r}
+Model <- lm(imdb_score ~ . , data =  sampled_data_regression)
+summary(Model)
+
+```
+
+```{r}
+Model <- lm(gross ~ . , data =  sampled_data_regression)
+summary(Model)
+
+```
+```{r}
+library(ggplot2)
+```
+
+#Creating Scatter Plot between imdb score and variables highly correlated with IMDB score
+
+#scatter plot between duration and imdb score
+```{r}
+plot(sampled_data_regression$duration,sampled_data_regression$imdb_score,
+     xlab = "duration", ylab = "imdb_score",
+     main = "Scatter Plot: Duration vs. IMDB score")
+```
+#scatter plot between num_voted_users and imdb score
+```{r}
+plot(sampled_data_regression$num_voted_users,sampled_data_regression$imdb_score,
+     xlab = "num_voted_users", ylab = "imdb_score",
+     main = "Scatter Plot: num_voted_users vs. IMDB score")
+```
+```{r}
+library(scales)
+```
+
+#Financial & Social Metrics
+#scatter plot between budget and gross
+```{r}
+ggplot(sampled_data_regression, aes(x = budget / 1e6, y = gross / 1e6)) +
+  geom_point() +
+  labs(x = "Budget (in millions)", y = "Gross Earnings (in millions)", 
+       title = "Scatter Plot: Budget vs Gross Earnings") +
+  scale_x_continuous(labels = scales::label_number_si()) +
+  scale_y_continuous(labels = scales::label_number_si())
+```
+# Scatter plot between 'movie_facebook_likes' and 'imdb_score' with labels in millions
+```{r}
+ggplot(sampled_data_regression, aes(x = movie_facebook_likes / 1e6, y = imdb_score)) +
+  geom_point() +
+  labs(x = "Movie Facebook Likes (in millions)", y = "IMDb Score", 
+       title = "Scatter Plot: Movie Facebook Likes vs IMDb Score") +
+  scale_x_continuous(labels = scales::label_number_si())
+
+```
+
+Scatter plot between 'director_facebook_likes' and 'imdb_score'
+
+
+# Scatter plot between 'cast_total_facebook_likes' and 'imdb_score'
+```{r}
+ggplot(sampled_data_regression, aes(x = cast_total_facebook_likes, y = imdb_score)) +
+  geom_point() +
+  labs(x = "Cast Total Facebook Likes", y = "IMDb Score",
+       title = "Scatter Plot: Cast Total Facebook Likes vs IMDb Score")
+
+```
+
+#Review & Reception Metrics
+# Scatter plot between 'num_critic_for_reviews' and 'imdb_score'
+```{r}
+ggplot(sampled_data_regression, aes(x = num_critic_for_reviews, y = imdb_score)) +
+  geom_point() +
+  labs(x = "Number of Critic Reviews", y = "IMDb Score",
+       title = "Scatter Plot: Num Critic Reviews vs IMDb Score")
+
+```
+
+# Scatter plot between 'num_user_for_reviews' and 'imdb_score'
+```{r}
+ggplot(sampled_data_regression, aes(x = num_user_for_reviews, y = imdb_score)) +
+  geom_point() +
+  labs(x = "Number of User Reviews", y = "IMDb Score",
+       title = "Scatter Plot: Num User Reviews vs IMDb Score")
+
+```
+
+#R Code for Correlation Analysis
+# Calculate correlation between 'gross' and 'imdb_score'
+```{r}
+correlation_result <- cor(sampled_data_regression$gross, sampled_data_regression$imdb_score)
+```
+# Print the correlation coefficient
+```{r}
+print(correlation_result)
+```
+# Interpretation based on the correlation coefficient
+
+```{r}
+if (correlation_result > 0) {
+  cat("There is a positive correlation between gross earnings and IMDb ratings.\n")
+} else if (correlation_result < 0) {
+  cat("There is a negative correlation between gross earnings and IMDb ratings.\n")
+} else {
+  cat("There is no linear relationship between gross earnings and IMDb ratings.\n")
+}
+```
+
+```{r}
+
+sample_index <- sample(nrow(sampled_data_regression), size=nrow(sampled_data_regression)*0.90, replace=F)
+
+train_valid <- sampled_data_regression[sample_index,]
+test <- sampled_data_regression[-sample_index,]
+
+library(caret)
+
+myCtrl <- trainControl(method="cv",
+                       number=10)
+myGrid <- expand.grid(.k=c(1:15))
+set.seed(1)
+knn_imdb <- train(as.numeric(imdb_score)~., 
+                    data=train_valid,
+                    method="knn",
+                    trControl=myCtrl,
+                    tuneGrid=myGrid,
+                    preProc=c("center","scale"))
+
+knn_imdb
+
+```
+
+```{r}
+
+predicted_imdb <- predict(knn_imdb,
+                            newdata=test,
+                            type='raw') 
+
+forecast::accuracy(predicted_imdb,test$imdb_score)
+```
